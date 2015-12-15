@@ -1,0 +1,11 @@
+MultiPhase: ScoreOnDate
+Phases:
+
+score
+date-normalizer
+doc-date
+score-removes
+score-get-possible-dates
+contextDate
+score-date-normalizer
+score-choose-best-date

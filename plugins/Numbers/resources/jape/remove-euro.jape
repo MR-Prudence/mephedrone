@@ -1,0 +1,25 @@
+/*
+ *  Copyright (c) 2009, The University of Sheffield
+ *
+ *  Removes any numbers which have been added via rules with Euro
+ *  in the name. It would be nice to not add them but this would
+ *  result in a lot of duplication of macros etc. which would be
+ *  hard to maintain long term.
+ *
+ *  Mark A. Greenwood, June 2009
+ */
+
+Phase: RemoveEuroNumbers
+
+Input: Number
+Options: control = appelt
+
+Rule: RemoveEuroNumbers
+(
+	{Number.rule =~ "(?i)Euro"}	
+):number
+-->
+{
+	AnnotationSet tagSet = (AnnotationSet)bindings.get("number");
+	inputAS.removeAll(tagSet);
+}

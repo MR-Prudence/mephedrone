@@ -1,0 +1,25 @@
+Phase: One
+Options: Control = appelt
+Input: Coding mephgaz meowtwo meow meowconn meph meowconn1 meowcorrect
+
+Rule: Mephgaztest
+Priority:10
+(
+{Coding contains mephgaz}
+|
+{Coding contains meowcorrect}
+|
+{Coding contains meow,Coding contains meowconn}
+|
+{Coding contains meph,Coding contains meowconn1}
+):match
+-->
+:match.coding1 = {coder = "positive", rule = "Mephgaztest"}
+
+Rule: negative
+Priority:9
+(
+{Coding}
+):match
+-->
+:match.coding1 = {coder = "negative", rule = "negative"}

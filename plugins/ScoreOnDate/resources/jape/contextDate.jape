@@ -1,0 +1,214 @@
+Phase: CONTEXTDATE
+
+Input: Date Token Score Split
+Options: control = appelt
+
+Rule: notscore
+(
+	{Date}
+	{Token.string == "to"}
+	{Score}
+)
+-->
+{}
+
+Rule: score2Ondate
+(
+   ({Score}):score
+   ({Token.string == on})
+   ({Date}):date
+)-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "score2Ondate");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: score2Indate
+(
+   ({Score}):score
+   ({Token.string == in})
+   ({Date}):date
+)-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "score2Indate");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: rule3
+(
+
+   ({Token.string == scored})
+   ({Score}):score
+   ({Date}):date
+)-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "rule3");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: rule4
+(
+
+   ({Date}):date
+   ({Token.string != ")", !Split})[0,4]
+   ({Score}):score
+)-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "rule4");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: rule5
+(
+
+   ({Date}):date
+   ({Token})*
+   {Token.string == that}{Token.string == time}
+   ({Token, !Split})*
+   ({Score}):score
+)-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "rule5");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: rule6
+(
+   ({Score}):score
+   ({Token.string == "("})
+   ({Date}):date
+   ({Token.string == ")"})
+)
+-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "rule6");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: rule7
+(
+   ({Score}):score
+   ({Token, !Split, !Score})*
+   ({Token.string == "-"})
+   ({Date}):date
+   {Split}
+)
+-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "rule7");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: rule8
+(
+   ({Score}):score   
+   ({Date}):date   
+)-->
+{
+try{
+   Annotation date= ((AnnotationSet)bindings.get("date")).iterator().next();  
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+
+   //get the content of the date
+   String strDate = doc.getContent().getContent(date.getStartNode().getOffset(), date.getEndNode().getOffset()).toString();
+    
+   //get fm of score and add the date
+   gate.FeatureMap fm = score.getFeatures();
+   fm.put("contextDate", strDate);
+   fm.put("contextDateRule", "rule8");
+
+}catch(Exception e){
+e.printStackTrace();
+}
+}

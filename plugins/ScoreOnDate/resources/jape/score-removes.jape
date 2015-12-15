@@ -1,0 +1,56 @@
+Phase: REMOVES
+
+Input: Split Date Score Token MMSE-Lookup
+Options: control = appelt
+
+
+
+Rule: removesScore2date2sent
+(
+   ({Score}):score1
+   ({Token.kind == punctuation})
+   ({Token.kind == number})
+   ({Score}):score2
+
+)
+-->
+{
+try{
+   Annotation score1= ((AnnotationSet)bindings.get("score1")).iterator().next();  
+   Annotation score2= ((AnnotationSet)bindings.get("score2")).iterator().next();
+   outputAS.remove(score1);
+   outputAS.remove(score2);
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: removesUnder14
+(
+   ({Score.denominator < 41}):score
+
+)
+-->
+{
+try{
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+   outputAS.remove(score);
+}catch(Exception e){
+e.printStackTrace();
+}
+}
+
+Rule: removesOver30
+(
+   ({Score.denominator > 100}):score
+
+)
+-->
+{
+try{
+   Annotation score = ((AnnotationSet)bindings.get("score")).iterator().next();
+   outputAS.remove(score);
+}catch(Exception e){
+e.printStackTrace();
+}
+}

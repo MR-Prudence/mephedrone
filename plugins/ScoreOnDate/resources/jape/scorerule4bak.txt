@@ -1,0 +1,19 @@
+
+Rule: score4
+(
+   (
+	{Token.string == "scored"}
+   )
+   ({Number}):num1
+):score
+-->
+{
+   Annotation num1 = ((AnnotationSet)bindings.get("num1")).iterator().next();
+
+   FeatureMap params = Factory.newFeatureMap();
+   params.put("rule", "score1");
+   params.put("numerator", ((Double)num1.getFeatures().get("value")).intValue()+"");
+   params.put("denominator", "100");
+
+   outputAS.add(num1.getStartNode(), num1.getEndNode(), "Score", params);
+}

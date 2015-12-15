@@ -1,0 +1,324 @@
+Phase: Number
+
+Input: Token SpaceToken Split Number sub
+Options: control = appelt
+
+/*
+ * Create annotations Number from Token.kind == "number" and add their values
+ * as a feature 'value' that can be parsed with Double.valueOf().
+ *
+ * Roman numbers and numbers in words have been found previously.
+ *
+ * TODO: recognize '1x10' as a number
+ */
+
+
+Macro: NUMBER_PREFIX
+/*
+ * Note that '±', '+/-' will be treated later as interval.
+ * TODO: add 'minus' ?
+ */
+(
+  {Token.string == "-"}
+  |{Token.string == "−"}
+  |{Token.string == "+"}
+)
+
+
+Macro: NUMBER_SUFFIX
+/*
+ * TODO: to use in the same way as NUMBER_PREFIX?
+ * Need examples, not found any in the gold standard.
+ */
+(
+   {Token.string == "m"}
+  |{Token.string == "million"}
+  |{Token.string == "b"}
+  |{Token.string == "billion"}
+  |{Token.string == "bn"}
+  |{Token.string == "k"}
+  |{Token.string == "K"}
+)
+
+/*
+ * This rule stops us from matching things that have already been matches
+ * as numbers. Note that the really the NUMBER_PREFIX should already be
+ * inside the Number annotation but has been included in the rule to
+ * cope with those plugins/resources which don't do this already. It
+ * should probably be removed at some future point.
+ */
+Rule: AlreadyGone
+Priority: 500
+(
+   (NUMBER_PREFIX)?	
+   {Number}
+)
+-->
+{}
+
+Rule: SkipSubscript
+Priority: 500
+(
+   {sub}
+)
+-->
+{}
+
+Rule: IntervalNumbers
+Priority:200
+/*
+ * Annotates separately as Number each number of an interval.
+ * Notably to avoid having the second number as a negative number.
+ * 3.3-4.0 mm
+ */
+(
+  (NUMBER_PREFIX)?
+  ({Token.kind == "number"}
+   ({Token.string == "."}{Token.kind == "number"}
+   )?
+  ):number1
+  ({Token.string == "-"}
+  |{Token.string == "−"}
+  |{Token.string == "±"}
+  )
+  ({Token.kind == "number"}
+   ({Token.string == "."}{Token.kind == "number"}
+   )?
+  ):number2
+)
+-->
+:number1 {
+  try {
+  String value = doc.getContent().getContent(
+    number1Annots.firstNode().getOffset(),
+    number1Annots.lastNode().getOffset()).toString();
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "number.IntervalNumbers");
+  fm.put("value", Double.valueOf(value));
+  outputAS.add(number1Annots.firstNode().getOffset(),
+               number1Annots.lastNode().getOffset(),
+               "Number", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+},
+:number2 {
+  try {
+  String value = doc.getContent().getContent(
+    number2Annots.firstNode().getOffset(),
+    number2Annots.lastNode().getOffset()).toString();
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "number.IntervalNumbers");
+  fm.put("value", Double.valueOf(value));
+  outputAS.add(number2Annots.firstNode().getOffset(),
+               number2Annots.lastNode().getOffset(),
+               "Number", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+}
+
+
+/*
+ * Annotates a sequence of number tokens as Number.
+ * 12,345,567.89012 
+ */
+Rule: EnglishDecimalNumber
+Priority:100
+(
+  (NUMBER_PREFIX)?
+  //first segment can be 1..3 long
+  {Token.kind == "number", Token.length >= 1, Token.length <= 3}
+  //a series of comma 3 digits, optional
+  ({Token.string == ","}{Token.kind == "number", Token.length == 3})[0,5]
+  //end with either the decimal part, or the last thousands group
+  (
+    ({Token.string == "."}{Token.kind == "number"})
+   |({Token.string == ","}{Token.kind == "number", Token.length == 3})
+  )
+):tag
+-->
+{
+  AnnotationSet tagSet = (AnnotationSet)bindings.get("tag");
+  String value;
+  try {
+  value = doc.getContent().getContent(
+    tagSet.firstNode().getOffset(),
+    tagSet.lastNode().getOffset()).toString();
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "number.EnglishDecimalNumber");
+  fm.put("value", Double.valueOf(value.replace(",", "").replace("−", "-")));
+  outputAS.add(tagSet.firstNode().getOffset(),
+               tagSet.lastNode().getOffset(),
+               "Number", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+}
+
+/*
+ * Annotates a sequence of number tokens as Number.
+ * 12.345.567,89012 
+ */  
+Rule: EuroDecimalNumber
+Priority:100
+(
+  (NUMBER_PREFIX)?
+  //first segment can be 1..3 long
+  {Token.kind == "number", Token.length >= 1, Token.length <= 3}
+  //a series of comma 3 digits, optional
+  ({Token.string=="."}{Token.kind == "number", Token.length == 3})[0,5]
+  //end with either the decimal part, or the last thousands group
+  (
+    ({Token.string == ","} {Token.kind == "number"})
+   |({Token.string == "."} {Token.kind == "number", Token.length == 3})
+  )
+):tag
+-->
+{
+  AnnotationSet tagSet = (AnnotationSet)bindings.get("tag");
+  String value;
+  try {
+  value = doc.getContent().getContent(
+    tagSet.firstNode().getOffset(),
+    tagSet.lastNode().getOffset()).toString();
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "number.EuroDecimalNumber");
+  fm.put("value", Double.valueOf(value.replace(".", "").replace(",", ".").replace("−", "-")));
+  outputAS.add(tagSet.firstNode().getOffset(),
+               tagSet.lastNode().getOffset(),
+               "Number", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+}
+
+
+/*
+ * Annotates a sequence of number tokens as Number.
+ * 12 345 567.89012 
+ */  
+Rule: SpaceDecimalNumber
+Priority:100
+(
+  (NUMBER_PREFIX)?
+  //first segment can be 1..3 long
+  {Token.kind == "number", Token.length >= 1, Token.length <= 3}
+  //a series of comma 3 digits, optional
+  ({SpaceToken.string == " "}{Token.kind == "number", Token.length == 3})[0,5]
+  //end with either the decimal part, or the last thousands group
+  (
+    (({Token.string == "."}|{Token.string == ","}) {Token.kind == "number"})
+   |({SpaceToken.string == " "} {Token.kind == "number", Token.length == 3})
+  )
+):tag
+-->
+{
+  AnnotationSet tagSet = (AnnotationSet)bindings.get("tag");
+  String value;
+  try {
+  value = doc.getContent().getContent(
+    tagSet.firstNode().getOffset(),
+    tagSet.lastNode().getOffset()).toString();
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "number.SpaceDecimalNumber");
+  fm.put("value", Double.valueOf(value.replace(" ", "").replace("−", "-")));
+  outputAS.add(tagSet.firstNode().getOffset(),
+               tagSet.lastNode().getOffset(),
+               "Number", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+}
+  
+  
+/*
+ * Annotates a sequence of number tokens as Number.
+ * 12345567[.|,]89012 
+ */  
+Rule: CompactDecimalNumber
+Priority:70
+(
+  (NUMBER_PREFIX)?
+  //first segment
+  {Token.kind == "number"}
+  ({Token.string == "."}|{Token.string == ","})
+  {Token.kind == "number"}
+):tag
+-->
+{
+  AnnotationSet tagSet = (AnnotationSet)bindings.get("tag");
+  String value;
+  try {
+  value = doc.getContent().getContent(
+    tagSet.firstNode().getOffset(),
+    tagSet.lastNode().getOffset()).toString();
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "number.CompactDecimalNumber");
+  fm.put("value", Double.valueOf(value.replace(",", ".").replace("−", "-")));
+  outputAS.add(tagSet.firstNode().getOffset(),
+               tagSet.lastNode().getOffset(),
+               "Number", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+}
+
+
+Rule: Number
+Priority:50
+/*
+ * Annotates a single number token as Number.
+ */
+(
+  (NUMBER_PREFIX)?
+  {Token.kind == "number"}
+):tag
+-->
+{
+  AnnotationSet tagSet = (AnnotationSet)bindings.get("tag");
+  String value;
+  try {
+  value = doc.getContent().getContent(
+    tagSet.firstNode().getOffset(),
+    tagSet.lastNode().getOffset()).toString();
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "number.Number");
+
+  //TODO: THIS IS HORRID, REPLACE WITH SOMETHING BETTER AS SOON AS POSSIBLE!
+  fm.put("value", Double.valueOf(value.replace("−", "-")));
+  outputAS.add(tagSet.firstNode().getOffset(),
+               tagSet.lastNode().getOffset(),
+               "Number", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+}

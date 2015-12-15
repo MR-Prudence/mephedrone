@@ -1,0 +1,11 @@
+Phase: DocumentDate
+
+Input: Date
+Options: control = once
+
+Rule: DocumentDate1
+(
+   {Date.complete == "true", Date.relative != "future"}
+):firstDate
+-->
+:firstDate.DocumentDate = {docDateRule="DocumentDate1"}

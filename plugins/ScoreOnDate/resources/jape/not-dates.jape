@@ -1,0 +1,25 @@
+Phase: NotDates
+
+Input: Token Date
+Options: control = appelt
+
+Rule: DOB
+(
+	{Token.string == "DOB"}({Token})[0,2]
+	{Date}
+):match
+-->
+{
+	AnnotationSet match = (AnnotationSet)bindings.get("match");
+	inputAS.removeAll(inputAS.get("Date",match.firstNode().getOffset(), match.lastNode().getOffset()));
+}
+
+Rule: Entity
+({Token.string == "&"}{Token.string == "#"}
+ {Token.kind == "number"}{Token.string == ";"}
+):match
+-->
+{
+	AnnotationSet match = (AnnotationSet)bindings.get("match");
+	inputAS.removeAll(inputAS.get("Date",match.firstNode().getOffset(), match.lastNode().getOffset()));
+}

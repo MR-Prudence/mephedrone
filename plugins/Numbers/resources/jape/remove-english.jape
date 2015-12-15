@@ -1,0 +1,25 @@
+/*
+ *  Copyright (c) 2009, The University of Sheffield
+ *
+ *  Removes any numbers which have been added via rules with English
+ *  in the name. It would be nice to not add them but this would result
+ *  in a lot of duplication of macros etc. which would be hard to
+ *  maintain long term.
+ *
+ *  Mark A. Greenwood, June 2009
+ */
+
+Phase: RemoveEnglishNumbers
+
+Input: Number
+Options: control = appelt
+
+Rule: RemoveEnglishNumbers
+(
+	{Number.rule =~ "(?i)English"}	
+):number
+-->
+{
+	AnnotationSet tagSet = (AnnotationSet)bindings.get("number");
+	inputAS.removeAll(tagSet);
+}

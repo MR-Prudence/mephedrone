@@ -1,0 +1,39 @@
+/*
+ *  Copyright (c) 1998-2009, The University of Sheffield.
+ *
+ *  Valentin Tablan, 28 Jan 2009
+ *
+ *  $Id$
+ */
+
+Phase: Exponent
+
+Input: Number sup
+Options: control = appelt
+
+
+/**
+ * Finds numbers inside <sup> tags (which are sometimes used as exponents).
+ */
+Rule: Exponent
+({sup contains Number}):exponent
+-->
+{
+  AnnotationSet exponentSet = (AnnotationSet)bindings.get("exponent");
+  AnnotationSet numberSet = inputAS.getContained(
+    exponentSet.firstNode().getOffset(),
+    exponentSet.lastNode().getOffset())
+    .get("Number");
+  FeatureMap fm = Factory.newFeatureMap();
+  fm.put("rule", "exponent.Exponent");
+  // Number.value -> Exponent.value
+  fm.put("value",
+    numberSet.iterator().next().getFeatures().get("value"));
+  try {
+    outputAS.add(exponentSet.firstNode().getOffset(),
+                 exponentSet.lastNode().getOffset(),
+                 "Exponent", fm);
+  } catch (InvalidOffsetException e) {
+    throw new GateRuntimeException(e); // this should never happen
+  }
+}

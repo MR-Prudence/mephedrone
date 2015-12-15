@@ -1,0 +1,58 @@
+Phase:two
+Options: Control = appelt
+Input: Token Sentence meow meowconn
+
+Rule: meowtwo
+(
+{Token.string == "on"}{meow}
+|
+{Token.string == "on"}{Token.string == "the"}{meow}
+|
+{Token.string == "effects"}{Token.string == "of"}{meow}
+|
+{Token.string == "cut"}{meow}
+|
+{Token.string == "did"}{meow}
+|
+{Token.string =~ "consum"}{meow}
+|
+{Token.string =~ "took"}{meow}
+|
+{Token.string =~ "took"}{Token.string=="some"}{meow}
+|
+{Token.string =~ "take"}{meow}
+|
+{Token.string =~ "take"}{Token.string=="some"}{meow}
+|
+{Token.string =~ "taken"}{meow}
+|
+{Token.string =~ "taken"}{Token.string=="some"}{meow}
+|
+{Token.string =~ "taking"}{meow}
+|
+{Token.string =~ "taking"}{Token.string=="some"}{meow}
+|
+{Token.string == "tried"}{meow}
+|
+{Token.string == "bought"}{meow}
+|
+{Token.string == "bought"}{Token.string=="some"}{meow}
+|
+{Token.string == "ordered"}{meow}
+|
+{Token.string == "ordered"}{Token.string=="some"}{meow}
+|
+{Token.string == "purchased"}{meow}
+|
+{Token.string == "purchased"}{Token.string=="some"}{meow}
+|
+{Token.string == "scored"}{meow}
+|
+{Token.string == "score"}{Token.string=="some"}{meow}
+|
+{Token.string == "of"}{meow}
+) :match
+-->
+:match.meowcorrect = {rule = "meowtwo"}
+
+

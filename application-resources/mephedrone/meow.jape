@@ -1,0 +1,14 @@
+Phase:two
+Options: Control = appelt
+Input: Token Sentence meow meowconn
+
+Rule: meowtwo
+(
+{Token.string == "on"}{meow}
+|
+{Token.string == "on"}{Token.string == "the"}{meow}
+) :match
+-->
+:match.meowcorrect = {rule = "meowtwo"}
+
+

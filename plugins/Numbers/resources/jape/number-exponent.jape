@@ -1,0 +1,86 @@
+/*
+ *  Copyright (c) 1998-2009, The University of Sheffield.
+ *
+ *  Valentin Tablan, 28 Jan 2009
+ *
+ *  $Id$
+ */
+
+Phase: NumberExponent
+
+Input: Token Number Exponent Split
+Options: control = appelt
+
+
+Rule: NumberExponent
+/*
+ * Number with power or exponent.
+ * Ex: 1.10^-15, ±2×10e3, 2×10 -7, 10 -7, 10 4
+ * Here ' -7' means 'Exponent-7'
+ */
+(
+  // an optional multiplier
+  (
+    ({Number.type != "roman"}):multiplier
+    ({Token.string == "*"}
+    |{Token.string == "x"}
+    |{Token.string == "×"}
+    |{Token.string == "."}
+    |{Token.string == "·"})
+  )?
+  // the base number is always present
+  ({Number.type != "roman"}):base
+  // the exponent part is always present
+  (
+    (
+      ({Token.string == "e"} | {Token.string == "^"})?
+      {Number.type != "roman"}
+    ) 
+    | {Exponent}
+  ):power
+):expNumber
+-->
+{
+  // delete Number annotations, they are superseded by Exponent annotations
+  AnnotationSet expSet = (AnnotationSet)bindings.get("expNumber"); 
+  Long start = expSet.firstNode().getOffset();
+  Long end = expSet.lastNode().getOffset(); 
+  AnnotationSet toDelete = inputAS.getContained(start, end);
+  if(toDelete != null && toDelete.size() > 0) {
+    toDelete = toDelete.get("Number");
+    inputAS.removeAll(toDelete);
+  }
+
+  // calculate the whole numeric value
+  // every Number/Exponent annotations must have a feature 'value'
+  AnnotationSet multiplierSet = (AnnotationSet)bindings.get("multiplier");
+  Annotation multiplierAnn =
+   (multiplierSet == null || multiplierSet.isEmpty()) ?
+    null : multiplierSet.iterator().next();
+  double multiplier = (multiplierAnn == null) ?
+    1 : (Double) multiplierAnn.getFeatures().get("value");
+  Annotation baseAnn =
+    ((AnnotationSet)bindings.get("base")).iterator().next();
+  double base = (Double)baseAnn.getFeatures().get("value");
+  AnnotationSet powerSet = (AnnotationSet)bindings.get("power");
+  double power = (powerSet == null || powerSet.isEmpty()) ?
+   0 : (Double)(
+    (powerSet.get("Exponent") == null || powerSet.get("Exponent").isEmpty() ?
+     powerSet.get("Number").iterator().next().getFeatures().get("value")
+   : powerSet.get("Exponent").iterator().next().getFeatures().get("value")));
+    
+  // create a new number covering the extent
+  FeatureMap features = Factory.newFeatureMap(); 
+  features.put("rule", "number-exponent.NumberExponent");
+  features.put("value", multiplier * Math.pow(base, power));
+  try {
+    outputAS.add(start, end, "Number", features);
+
+  } catch(InvalidOffsetException ioe){
+    throw new LuckyException(ioe);
+  } catch (NumberFormatException e) {
+    //this should never happen but if it does then dump a sensible message but not the stack trace so we
+    //don't get confused with real unexpected errors if we grep the stack trace
+    Err.println("Invalid number " + e.getMessage() +" in " + doc.getSourceUrl() + " using " + getClass().getName());
+  }
+}

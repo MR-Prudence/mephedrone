@@ -1,0 +1,84 @@
+Phase: Score
+
+Input: Token Number
+Options: control = appelt
+
+Rule: score1
+(
+   ({Number}):num1
+   /* ({Token.string == "/"}|{Token.string == ":"}) */
+   {Token.string == "/"}
+   ({Number}):num2
+):score
+-->
+{
+   Annotation num1 = ((AnnotationSet)bindings.get("num1")).iterator().next();
+   Annotation num2 = ((AnnotationSet)bindings.get("num2")).iterator().next();
+
+   AnnotationSet score = (AnnotationSet)bindings.get("score");
+
+   FeatureMap params = Factory.newFeatureMap();
+   params.put("rule", "score1");
+   params.put("numerator", ((Double)num1.getFeatures().get("value")).intValue()+"");
+   params.put("denominator", ((Double)num2.getFeatures().get("value")).intValue()+"");
+
+   outputAS.add(score.firstNode(), score.lastNode(), "Score", params);
+}
+
+Rule: score2
+(
+   ({Number}):num1
+   (
+      ({Token.string == "out"}({Token.string == "of"})?)|
+      {Token.string == "from"}|
+      {Token.string == "in"}	|
+	{Token.string == "of"}	|
+	{Token.string == "o"}
+   )
+   ({Number}):num2
+):score
+-->
+{
+   Annotation num1 = ((AnnotationSet)bindings.get("num1")).iterator().next();
+   Annotation num2 = ((AnnotationSet)bindings.get("num2")).iterator().next();
+
+   AnnotationSet score = (AnnotationSet)bindings.get("score");
+
+   FeatureMap params = Factory.newFeatureMap();
+   params.put("rule", "score2");
+   params.put("numerator", ((Double)num1.getFeatures().get("value")).intValue()+"");
+   params.put("denominator", ((Double)num2.getFeatures().get("value")).intValue()+"");
+
+   outputAS.add(score.firstNode(), score.lastNode(), "Score", params);
+}
+
+
+/* can probably combine with rule1 if we make scored optional */
+Rule: score3
+(
+   (
+	{Token.string == "scored"}
+   )
+   (
+    ({Number}):num1
+    /* ({Token.string == "/"}|{Token.string == ":"}) */
+    {Token.string == "/"}
+    ({Number}):num2
+   ):score
+)
+-->
+{
+   Annotation num1 = ((AnnotationSet)bindings.get("num1")).iterator().next();
+   Annotation num2 = ((AnnotationSet)bindings.get("num2")).iterator().next();
+
+   AnnotationSet score = (AnnotationSet)bindings.get("score");
+
+   FeatureMap params = Factory.newFeatureMap();
+   params.put("rule", "score3");
+   params.put("numerator", ((Double)num1.getFeatures().get("value")).intValue()+"");
+   params.put("denominator", ((Double)num2.getFeatures().get("value")).intValue()+"");
+
+   outputAS.add(score.firstNode(), score.lastNode(), "Score", params);
+}
+
+
